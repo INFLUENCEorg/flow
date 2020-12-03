@@ -59,7 +59,7 @@ def desired_velocity(env, fail=False, edge_list=None):
     return max(max_cost - cost, 0) / (max_cost + eps)
 
 
-def average_velocity(env, fail=False):
+def average_velocity(env, fail=False, veh_ids=None):
     """Encourage proximity to an average velocity.
 
     This reward function returns the average velocity of all
@@ -78,8 +78,10 @@ def average_velocity(env, fail=False):
     float
         reward value
     """
-    vel = np.array(env.k.vehicle.get_speed(env.k.vehicle.get_ids()))
-
+    if veh_ids is None:
+        vel = np.array(env.k.vehicle.get_speed(env.k.vehicle.get_ids()))
+    else:
+        vel = np.array(env.k.vehicle.get_speed(veh_ids))
     if any(vel < -100) or fail:
         return 0.
     if len(vel) == 0:

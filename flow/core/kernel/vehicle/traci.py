@@ -132,14 +132,14 @@ class TraCIVehicle(KernelVehicle):
             step
         """
         vehicle_obs = {}
-        if self.render:
-            for veh_id in self.__ids:
-                vehicle_obs[veh_id] = \
-                    self.kernel_api.vehicle.getSubscriptionResults(veh_id)
-        else:
-            for veh_id in self.__ids:
-                vehicle_obs[veh_id] = self._get_libsumo_subscription_results(
-                    veh_id)
+        # # if self.render:
+        #     for veh_id in self.__ids:
+        #         vehicle_obs[veh_id] = \
+        #             self.kernel_api.vehicle.getSubscriptionResults(veh_id)
+        # else:
+        for veh_id in self.__ids:
+            vehicle_obs[veh_id] = self._get_libsumo_subscription_results(
+                veh_id)
 
         sim_obs = self.kernel_api.simulation.getSubscriptionResults()
 
@@ -155,8 +155,8 @@ class TraCIVehicle(KernelVehicle):
             self.remove(veh_id)
             # remove exiting vehicles from the vehicle subscription if they
             # haven't been removed already
-            if vehicle_obs[veh_id] is None:
-                vehicle_obs.pop(veh_id, None)
+            # if vehicle_obs[veh_id] is None:
+                # vehicle_obs.pop(veh_id, None)
         self._arrived_rl_ids.append(arrived_rl_ids)
 
         # add entering vehicles into the vehicles class
@@ -315,15 +315,15 @@ class TraCIVehicle(KernelVehicle):
                     self.__controlled_lc_ids.append(veh_id)
 
         # subscribe the new vehicle and get its subscription results
-        if self.render:
-            self.kernel_api.vehicle.subscribe(veh_id, [
-                tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
-                tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE
-            ])
-            self.kernel_api.vehicle.subscribeLeader(veh_id, 2000)
-            new_obs = self.kernel_api.vehicle.getSubscriptionResults(veh_id)
-        else:
-            new_obs = self._get_libsumo_subscription_results(veh_id)
+        # if self.render:
+        #     self.kernel_api.vehicle.subscribe(veh_id, [
+        #         tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
+        #         tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE
+        #     ])
+        #     self.kernel_api.vehicle.subscribeLeader(veh_id, 2000)
+        #     new_obs = self.kernel_api.vehicle.getSubscriptionResults(veh_id)
+        # else:
+        new_obs = self._get_libsumo_subscription_results(veh_id)
 
         # some constant vehicle parameters to the vehicles class
         self.__vehicles[veh_id]["length"] = self.kernel_api.vehicle.getLength(
@@ -367,8 +367,8 @@ class TraCIVehicle(KernelVehicle):
         # remove from sumo
         if veh_id in self.kernel_api.vehicle.getIDList():
             # unsubscribe the vehicle
-            if self.render:
-                self.kernel_api.vehicle.unsubscribe(veh_id)
+            # if self.render:
+                # self.kernel_api.vehicle.unsubscribe(veh_id)
             self.kernel_api.vehicle.remove(veh_id)
 
         if veh_id in self.__ids:

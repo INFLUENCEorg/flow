@@ -4,7 +4,8 @@ from flow.envs.bay_bridge import BayBridgeEnv
 from flow.envs.bottleneck import BottleneckAccelEnv, BottleneckEnv, \
     BottleneckDesiredVelocityEnv
 from flow.envs.traffic_light_grid import TrafficLightGridEnv, \
-    TrafficLightGridPOEnv, TrafficLightGridTestEnv
+    TrafficLightGridPOEnv, TrafficLightGridTestEnv, \
+    TrafficLightGridBitmapEnv
 from flow.envs.ring.lane_change_accel import LaneChangeAccelEnv, \
     LaneChangeAccelPOEnv
 from flow.envs.ring.accel import AccelEnv

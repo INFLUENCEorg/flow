@@ -31,7 +31,6 @@ ADDITIONAL_PO_ENV_PARAMS = {
     "target_velocity": 30,
 }
 
-
 class TrafficLightGridEnv(Env):
     """Environment used to train traffic lights.
 
@@ -120,7 +119,8 @@ class TrafficLightGridEnv(Env):
         self.rows = self.grid_array["row_num"]
         self.cols = self.grid_array["col_num"]
         # self.num_observed = self.grid_array.get("num_observed", 3)
-        self.num_traffic_lights = self.rows * self.cols
+        self.tl_controlled = env_params.additional_params['tl_controlled']
+        self.num_traffic_lights = len(self.tl_controlled)
         self.tl_type = env_params.additional_params.get('tl_type')
 
         super().__init__(env_params, sim_params, network, simulator)
@@ -136,26 +136,24 @@ class TrafficLightGridEnv(Env):
         # Keeps track of the last time the traffic lights in an intersection
         # were allowed to change (the last time the lights were allowed to
         # change from a red-green state to a red-yellow state.)
-        self.last_change = np.zeros((self.rows * self.cols, 1))
+        self.last_change = np.zeros((self.num_traffic_lights, 1))
         # Keeps track of the direction of the intersection (the direction that
         # is currently being allowed to flow. 0 indicates flow from top to
         # bottom, and 1 indicates flow from left to right.)
-        self.direction = np.zeros((self.rows * self.cols, 1))
+        self.direction = np.zeros((self.num_traffic_lights, 1))
         # Value of 1 indicates that the intersection is in a red-yellow state.
         # value 0 indicates that the intersection is in a red-green state.
-        self.currently_yellow = np.zeros((self.rows * self.cols, 1))
+        self.currently_yellow = np.zeros((self.num_traffic_lights, 1))
 
         # when this hits min_switch_time we change from yellow to red
         # the second column indicates the direction that is currently being
         # allowed to flow. 0 is flowing top to bottom, 1 is left to right
         # For third column, 0 signifies yellow and 1 green or red
         self.min_switch_time = env_params.additional_params["switch_time"]
-
-        if self.tl_type != "actuated":
-            for i in range(self.rows * self.cols):
-                self.k.traffic_light.set_state(
-                    node_id='center' + str(i), state="GrGr")
-                self.currently_yellow[i] = 0
+        for i, center in enumerate(self.tl_controlled):
+            self.k.traffic_light.set_state(
+                node_id=center, state="GrGr")
+            self.currently_yellow[i] = 0
 
         # # Additional Information for Plotting
         # self.edge_mapping = {"top": [], "bot": [], "right": [], "left": []}
@@ -249,7 +247,6 @@ class TrafficLightGridEnv(Env):
             # that should not switch the direction, and 1 indicates that switch
             # should happen
             rl_mask = rl_actions > 0.0
-
         for i, action in enumerate(rl_mask):
             if self.currently_yellow[i] == 1:  # currently yellow
                 self.last_change[i] += self.sim_step
@@ -258,27 +255,27 @@ class TrafficLightGridEnv(Env):
                 if self.last_change[i] >= self.min_switch_time:
                     if self.direction[i] == 0:
                         self.k.traffic_light.set_state(
-                            node_id='center{}'.format(i),
+                            node_id=self.tl_controlled[i],
                             state="GrGr")
                     else:
                         self.k.traffic_light.set_state(
-                            node_id='center{}'.format(i),
+                            node_id=self.tl_controlled[i],
                             state='rGrG')
                     self.currently_yellow[i] = 0
             else:
                 if action:
                     if self.direction[i] == 0:
                         self.k.traffic_light.set_state(
-                            node_id='center{}'.format(i),
+                            node_id=self.tl_controlled[i],
                             state='yryr')
                     else:
                         self.k.traffic_light.set_state(
-                            node_id='center{}'.format(i),
+                            node_id=self.tl_controlled[i],
                             state='ryry')
                     self.last_change[i] = 0.0
                     self.direction[i] = not self.direction[i]
                     self.currently_yellow[i] = 1
-
+    
     def compute_reward(self, rl_actions, **kwargs):
         """See class definition."""
         return - rewards.min_delay_unscaled(self) \
@@ -746,3 +743,60 @@ class TrafficLightGridTestEnv(TrafficLightGridEnv):
     def compute_reward(self, rl_actions, **kwargs):
         """No return, for testing purposes."""
         return 0
+
+class TrafficLightGridBitmapEnv(TrafficLightGridPOEnv):
+    """
+    """
+    def __init__(self, env_params, sim_params, network, simulator='traci'):
+        super().__init__(env_params, sim_params, network, simulator)
+
+        for p in ADDITIONAL_PO_ENV_PARAMS.keys():
+            if p not in env_params.additional_params:
+                raise KeyError(
+                    'Environment parameter "{}" not supplied'.format(p))
+        self.scale = env_params.additional_params['scale']
+    
+    def get_state(self):
+        """See parent class.
+
+        Returns a bitmap showing the location of the vehicles at each of the 
+        edges in the intersections that are being controlled.
+        """
+        for node in self.tl_controlled:
+            node_bitmap = []
+            node_edges = dict(self.network.node_mapping)[node]
+            for edge in node_edges:
+                edge_bitmap = self._initialize_bitmap(edge)
+                for vehicle in self.k.vehicle.get_ids_by_edge(edge):
+                    loc = int(self.get_distance_to_intersection(vehicle)//self.scale)
+                    if loc < len(edge_bitmap):
+                        edge_bitmap[loc] = 1
+                node_bitmap.append(edge_bitmap)
+            light_color = self.k.traffic_light.get_state(node_id=node)
+            light_vector = np.zeros(4, dtype=int)
+            if light_color[0] == 'G':
+                light_vector[3] = 1
+            elif light_color[0] == 'y':
+                light_vector[2] = 1
+            else:
+                if light_color[1] == 'y':
+                    light_vector[1] = 1
+                else:
+                    light_vector[0] = 1
+            node_bitmap.append(light_vector)
+        return node_bitmap
+
+    def compute_reward(self, rl_actions, **kwargs):
+        veh_ids = []
+        for node in self.tl_controlled:
+            node_edges = dict(self.network.node_mapping)[node]
+            for edge in node_edges:
+                for vehicle in self.k.vehicle.get_ids_by_edge(edge):
+                    veh_ids.append(vehicle)
+        # return -rewards.min_delay_unscaled_specified_vehicles(self, veh_ids)
+        v_top = max(self.k.network.speed_limit(edge) for edge in self.k.network.get_edge_list())
+        return rewards.average_velocity(self, veh_ids=veh_ids)/v_top
+
+    def _initialize_bitmap(self, edge):
+        bitmap = np.zeros(int(self.k.network.edge_length(edge)//self.scale), dtype=int)
+        return bitmap

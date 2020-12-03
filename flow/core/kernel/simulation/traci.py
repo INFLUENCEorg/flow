@@ -89,7 +89,7 @@ class TraCISimulation(KernelSimulation):
                     "--num-clients", str(sim_params.num_clients),
                 ]
 
-                logging.info(" Starting SUMO on port " + str(port))
+                # logging.info(" Starting SUMO on port " + str(port))
                 logging.debug(" Cfg file: " + str(network.cfg))
                 if sim_params.num_clients > 1:
                     logging.info(" Num clients are" +
