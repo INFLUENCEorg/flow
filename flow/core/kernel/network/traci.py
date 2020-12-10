@@ -190,7 +190,6 @@ class TraCIKernelNetwork(BaseKernelNetwork):
         self.total_edgestarts.sort(key=lambda tup: tup[1])
 
         self.total_edgestarts_dict = dict(self.total_edgestarts)
-
         self.__length = sum(
             self._edges[edge_id]['length'] for edge_id in self._edges
         )
