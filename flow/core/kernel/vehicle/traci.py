@@ -137,9 +137,6 @@ class TraCIVehicle(KernelVehicle):
         #         vehicle_obs[veh_id] = \
         #             self.kernel_api.vehicle.getSubscriptionResults(veh_id)
         # else:
-        for veh_id in self.__ids:
-            vehicle_obs[veh_id] = self._get_libsumo_subscription_results(
-                veh_id)
 
         sim_obs = self.kernel_api.simulation.getSubscriptionResults()
 
@@ -153,6 +150,9 @@ class TraCIVehicle(KernelVehicle):
                 # collisions
                 vehicle_obs[veh_id] = self.__sumo_obs[veh_id]
             self.remove(veh_id)
+
+        for veh_id in self.__ids:
+            vehicle_obs[veh_id] = self._get_libsumo_subscription_results(veh_id)
             # remove exiting vehicles from the vehicle subscription if they
             # haven't been removed already
             # if vehicle_obs[veh_id] is None:

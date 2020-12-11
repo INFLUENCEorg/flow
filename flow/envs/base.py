@@ -244,7 +244,7 @@ class Env(gym.Env):
         render : bool, optional
             specifies whether to use the gui
         """
-        self.k.close()
+        self.k.close(restart_simulation=True)
 
         # killed the sumo process if using sumo/TraCI
         if self.simulator == 'traci' and self.sim_params.render:
@@ -257,7 +257,7 @@ class Env(gym.Env):
             ensure_dir(sim_params.emission_path)
             self.sim_params.emission_path = sim_params.emission_path
 
-        self.k.network.generate_network(self.network)
+        # self.k.network.generate_network(self.network)
         self.k.vehicle.initialize(deepcopy(self.network.vehicles))
         kernel_api = self.k.simulation.start_simulation(
             network=self.k.network, sim_params=self.sim_params)
@@ -371,8 +371,8 @@ class Env(gym.Env):
             self.k.update(reset=False)
 
             # update the colors of vehicles
-            if self.sim_params.render:
-                self.k.vehicle.update_vehicle_colors()
+            # if self.sim_params.render:
+            #     self.k.vehicle.update_vehicle_colors()
 
             # crash encodes whether the simulator experienced a collision
             crash = self.k.simulation.check_collision()
@@ -453,7 +453,7 @@ class Env(gym.Env):
         #     )
         
         if (self.sim_params.restart_instance or \
-                (self.step_counter > 1e4 and self.simulator != 'aimsun')) and \
+            (self.step_counter > 1e4 and self.simulator != 'aimsun')) and \
                 self.step_counter > 0:
             self.step_counter = 0
             # issue a random seed to induce randomness into the next rollout

@@ -103,9 +103,10 @@ class Kernel(object):
         self.network.update(reset)
         self.simulation.update(reset)
 
-    def close(self):
+    def close(self, restart_simulation=False):
         """Terminate all components within the simulation and network."""
-        self.network.close()
+        if not restart_simulation:
+            self.network.close()
         self.simulation.close()
 
     @property
