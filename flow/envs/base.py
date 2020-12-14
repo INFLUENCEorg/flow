@@ -453,7 +453,7 @@ class Env(gym.Env):
         #     )
         
         if (self.sim_params.restart_instance or \
-            (self.step_counter > 1e4 and self.simulator != 'aimsun')) and \
+            (self.step_counter > 1e5 and self.simulator != 'aimsun')) and \
                 self.step_counter > 0:
             self.step_counter = 0
             # issue a random seed to induce randomness into the next rollout
