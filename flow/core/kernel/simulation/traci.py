@@ -113,7 +113,6 @@ class TraCISimulation(KernelSimulation):
                     traci_connection.simulationStep()
                 else:
                     import libsumo
-
                     # Use libsumo to create a simulation instance.
                     libsumo.start(sumo_call[1:3])
                     # libsumo.simulationStep()
