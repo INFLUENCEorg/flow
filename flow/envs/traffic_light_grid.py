@@ -118,7 +118,7 @@ class TrafficLightGridEnv(Env):
         self.grid_array = network.net_params.additional_params["grid_array"]
         self.rows = self.grid_array["row_num"]
         self.cols = self.grid_array["col_num"]
-        # self.num_observed = self.grid_array.get("num_observed", 3)
+        # self.num_observed =TrafficLightGridEnv self.grid_array.get("num_observed", 3)
         self.tl_controlled = env_params.additional_params['tl_controlled']
         self.num_traffic_lights = len(self.tl_controlled)
         self.tl_type = env_params.additional_params.get('tl_type')
@@ -787,15 +787,16 @@ class TrafficLightGridBitmapEnv(TrafficLightGridPOEnv):
         return node_bitmap
 
     def compute_reward(self, rl_actions, **kwargs):
-        veh_ids = []
+        v_top = max(self.k.network.speed_limit(edge) for edge in self.k.network.get_edge_list())
+        reward = np.array()
         for node in self.tl_controlled:
+            veh_ids = []
             node_edges = dict(self.network.node_mapping)[node]
             for edge in node_edges:
                 for vehicle in self.k.vehicle.get_ids_by_edge(edge):
                     veh_ids.append(vehicle)
-        # return -rewards.min_delay_unscaled_specified_vehicles(self, veh_ids)
-        v_top = max(self.k.network.speed_limit(edge) for edge in self.k.network.get_edge_list())
-        return rewards.average_velocity(self, veh_ids=veh_ids)/v_top
+            reward = np.append(reward, rewards.average_velocity(self, veh_ids=veh_ids)/v_top)
+        return reward
 
     def _initialize_bitmap(self, edge):
         bitmap = np.zeros(int(self.k.network.edge_length(edge)//self.scale), dtype=int)
