@@ -762,6 +762,7 @@ class TrafficLightGridBitmapEnv(TrafficLightGridPOEnv):
         Returns a bitmap showing the location of the vehicles at each of the 
         edges in the intersections that are being controlled.
         """
+        node_bitmaps = []
         for node in self.tl_controlled:
             node_bitmap = []
             node_edges = dict(self.network.node_mapping)[node]
@@ -784,11 +785,12 @@ class TrafficLightGridBitmapEnv(TrafficLightGridPOEnv):
                 else:
                     light_vector[0] = 1
             node_bitmap.append(light_vector)
-        return node_bitmap
+            node_bitmaps.append(node_bitmap)
+        return node_bitmaps
 
     def compute_reward(self, rl_actions, **kwargs):
         v_top = max(self.k.network.speed_limit(edge) for edge in self.k.network.get_edge_list())
-        reward = np.array()
+        reward = np.array([])
         for node in self.tl_controlled:
             veh_ids = []
             node_edges = dict(self.network.node_mapping)[node]

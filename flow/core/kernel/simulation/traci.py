@@ -115,7 +115,7 @@ class TraCISimulation(KernelSimulation):
                     import libsumo
                     # Use libsumo to create a simulation instance.
                     libsumo.start(sumo_call[1:3])
-                    # libsumo.simulationStep()
+                    libsumo.simulationStep()
 
                     # libsumo will act as the kernel API
                     traci_connection = libsumo
