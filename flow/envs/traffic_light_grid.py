@@ -797,7 +797,7 @@ class TrafficLightGridBitmapEnv(TrafficLightGridPOEnv):
             for edge in node_edges:
                 for vehicle in self.k.vehicle.get_ids_by_edge(edge):
                     veh_ids.append(vehicle)
-            reward = np.append(reward, rewards.average_velocity(self, veh_ids=veh_ids)/v_top/300)
+            reward = np.append(reward, rewards.average_velocity(self, veh_ids=veh_ids)/v_top)
         return reward
 
     def _initialize_bitmap(self, edge):
